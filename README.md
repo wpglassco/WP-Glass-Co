@@ -1,0 +1,2 @@
+# WP-Glass-Co
+Inventory 
