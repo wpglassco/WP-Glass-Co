@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weedplace — Glass Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<style>
+  :root {
+    --bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;
+    --border:#e2e0d8;--border-strong:#c8c5b8;
+    --text:#1a1916;--text2:#6b6860;--hint:#a09e97;
+    --accent:#2e7d32;--accent-l:#e8f5e9;--accent-h:#1b5e20;
+    --danger:#c0392b;--danger-l:#fdf0ef;
+    --warn:#d4880a;--warn-l:#fdf6e3;
+    --sh1:0 1px 3px rgba(0,0,0,.07);--sh2:0 4px 12px rgba(0,0,0,.09);--sh3:0 12px 32px rgba(0,0,0,.11);
+    --r:10px;--rs:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh}
+
+/* HEADER */
+header{background:var(–surface);border-bottom:1px solid var(–border);box-shadow:var(–sh1);position:sticky;top:0;z-index:50}
+.hi{max-width:1200px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:24px}
+.logo{font-family:‘Playfair Display’,serif;font-size:1.3rem;white-space:nowrap}
+.logo em{font-style:normal;color:var(–accent)}
+.logo sub{font-family:‘DM Sans’,sans-serif;font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(–hint);vertical-align:middle;margin-left:8px}
+.hstats{display:flex;margin-left:auto}
+.hs{padding:0 16px;border-left:1px solid var(–border);text-align:right}
+.hs:last-child{padding-right:0}
+.hs-v{font-family:‘Playfair Display’,serif;font-size:1.3rem;line-height:1}
+.hs-v.w{color:var(–warn)}
+.hs-l{font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(–hint);font-weight:500}
+
+/* MAIN */
+main{max-width:1200px;margin:0 auto;padding:26px 24px 60px}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.sw{flex:1;min-width:200px;position:relative}
+.si{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(–hint);pointer-events:none;font-size:.9rem}
+.sinput{width:100%;background:var(–surface);border:1.5px solid var(–border);border-radius:var(–rs);color:var(–text);padding:10px 13px 10px 34px;font-family:‘DM Sans’,sans-serif;font-size:.88rem;outline:none;transition:border-color .15s,box-shadow .15s;box-shadow:var(–sh1)}
+.sinput:focus{border-color:var(–accent);box-shadow:0 0 0 3px rgba(46,125,50,.1)}
+.sinput::placeholder{color:var(–hint)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 15px;border-radius:var(–rs);font-family:‘DM Sans’,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:all .15s;white-space:nowrap;line-height:1}
+.bp{background:var(–accent);color:#fff;border-color:var(–accent);box-shadow:var(–sh1)}
+.bp:hover{background:var(–accent-h);transform:translateY(-1px);box-shadow:var(–sh2)}
+.bs{background:var(–surface);color:var(–text);border-color:var(–border-strong);box-shadow:var(–sh1)}
+.bs:hover{border-color:var(–text2);background:var(–surface2)}
+.bg{background:transparent;color:var(–text2);border-color:transparent;padding:8px 11px;font-size:.8rem;font-weight:500}
+.bg:hover{background:var(–surface2);color:var(–text)}
+.bdg{background:transparent;color:var(–hint);border-color:transparent;padding:7px 9px;font-size:.85rem}
+.bdg:hover{background:var(–danger-l);color:var(–danger)}
+
+/* TABS */
+.fr{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.tab{padding:7px 14px;border-radius:999px;font-size:.78rem;font-weight:500;cursor:pointer;border:1.5px solid var(–border);background:var(–surface);color:var(–text2);transition:all .15s;font-family:‘DM Sans’,sans-serif}
+.tab:hover{border-color:var(–border-strong);color:var(–text)}
+.tab.active{background:var(–accent);border-color:var(–accent);color:#fff}
+.tab.wt{color:var(–warn);border-color:#f5c46b}
+.tab.wt.active{background:var(–warn);border-color:var(–warn);color:#fff}
+.tab.mt{color:var(–hint);border-style:dashed;font-size:.72rem}
+.tab.mt:hover{color:var(–accent);border-color:var(–accent);background:var(–accent-l)}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+
+/* CARD */
+.card{background:var(–surface);border:1.5px solid var(–border);border-radius:var(–r);box-shadow:var(–sh1);transition:box-shadow .2s,transform .2s,border-color .2s;animation:fu .25s ease both;display:flex;flex-direction:column;overflow:hidden}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.card:hover{box-shadow:var(–sh2);transform:translateY(-2px);border-color:var(–border-strong)}
+
+/* CARD PHOTO */
+.card-photo{width:100%;height:180px;object-fit:cover;display:block;background:var(–surface2);cursor:pointer;position:relative}
+.card-photo-wrap{position:relative;overflow:hidden}
+.card-photo-wrap:hover .photo-overlay{opacity:1}
+.photo-overlay{position:absolute;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;cursor:pointer}
+.photo-overlay span{color:#fff;font-size:.8rem;font-weight:600;background:rgba(0,0,0,.5);padding:6px 12px;border-radius:999px}
+.no-photo{width:100%;height:140px;background:var(–surface2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(–border)}
+.no-photo:hover{background:var(–border)}
+.no-photo span{font-size:1.6rem}
+.no-photo p{font-size:.72rem;color:var(–hint);font-weight:500}
+
+.card-body{padding:16px;display:flex;flex-direction:column;flex:1}
+.card-header2{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.card-type{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(–hint);background:var(–surface2);padding:3px 8px;border-radius:4px}
+.sbadge{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:4px}
+.bin{background:var(–accent-l);color:var(–accent)}
+.blow{background:var(–warn-l);color:var(–warn)}
+.bout{background:var(–danger-l);color:var(–danger)}
+.card-name{font-family:‘Playfair Display’,serif;font-size:1.1rem;color:var(–text);margin-bottom:2px;line-height:1.25}
+.card-sub{font-size:.75rem;color:var(–text2);margin-bottom:3px}
+.card-sku{font-size:.65rem;color:var(–hint);margin-bottom:12px;font-family:monospace}
+.div{height:1px;background:var(–border);margin:0 0 12px}
+.cmeta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.mi label{display:block;font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(–hint);margin-bottom:1px}
+.mi span{font-size:.88rem;font-weight:500;color:var(–text)}
+.pv{font-family:‘Playfair Display’,serif;font-size:1rem!important;color:var(–accent)!important}
+.cactions{display:flex;align-items:center;gap:7px;margin-top:auto}
+.qc{display:flex;align-items:center;border:1.5px solid var(–border);border-radius:var(–rs);overflow:hidden;flex:1}
+.qb{background:var(–surface2);border:none;color:var(–text);width:32px;height:32px;font-size:1.1rem;cursor:pointer;transition:background .12s;display:flex;align-items:center;justify-content:center;font-family:‘DM Sans’,sans-serif}
+.qb:hover{background:var(–border)}
+.qv{flex:1;text-align:center;font-weight:600;font-size:.9rem;border-left:1px solid var(–border);border-right:1px solid var(–border);line-height:32px}
+
+/* EMPTY */
+.empty{grid-column:1/-1;text-align:center;padding:60px 20px;background:var(–surface);border:1.5px dashed var(–border-strong);border-radius:var(–r)}
+.empty .ei{font-size:2.5rem;margin-bottom:10px}
+.empty h3{font-family:‘Playfair Display’,serif;font-size:1.2rem;margin-bottom:5px}
+.empty p{color:var(–text2);font-size:.85rem}
+
+/* OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:rgba(26,25,22,.48);z-index:200;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
+.overlay.open{display:flex}
+.modal{background:var(–surface);border-radius:14px;box-shadow:var(–sh3);width:100%;max-width:520px;max-height:94vh;overflow-y:auto;animation:mi .22s ease;border:1px solid var(–border)}
+@keyframes mi{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.mh{padding:18px 22px 14px;border-bottom:1px solid var(–border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(–surface);z-index:2;border-radius:14px 14px 0 0}
+.mh h2{font-family:‘Playfair Display’,serif;font-size:1.2rem}
+.mc{background:var(–surface2);border:none;border-radius:50%;width:28px;height:28px;font-size:.9rem;cursor:pointer;color:var(–text2);display:flex;align-items:center;justify-content:center;transition:background .12s;flex-shrink:0}
+.mc:hover{background:var(–border)}
+.mb{padding:18px 22px}
+.mf{padding:14px 22px;border-top:1px solid var(–border);display:flex;gap:9px;justify-content:flex-end;background:var(–bg);border-radius:0 0 14px 14px}
+
+/* FORM */
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:.72rem;font-weight:600;color:var(–text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.8px}
+.fld input,.fld select,.fld textarea{width:100%;background:var(–surface);border:1.5px solid var(–border);border-radius:var(–rs);color:var(–text);padding:9px 11px;font-family:‘DM Sans’,sans-serif;font-size:.9rem;outline:none;transition:border-color .15s,box-shadow .15s}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(–accent);box-shadow:0 0 0 3px rgba(46,125,50,.1)}
+.fld textarea{resize:vertical;min-height:64px}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fhint{font-size:.68rem;color:var(–hint);margin-top:3px}
+
+/* PHOTO UPLOAD AREA */
+.photo-section{margin-bottom:16px}
+.photo-section label{display:block;font-size:.72rem;font-weight:600;color:var(–text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px}
+.photo-slots{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photo-slot{border:1.5px dashed var(–border-strong);border-radius:var(–rs);overflow:hidden;aspect-ratio:4/3;position:relative;cursor:pointer;transition:border-color .15s,background .15s;background:var(–surface2)}
+.photo-slot:hover{border-color:var(–accent);background:var(–accent-l)}
+.photo-slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-slot .slot-preview{width:100%;height:100%;object-fit:cover;display:block}
+.photo-slot .slot-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;pointer-events:none}
+.photo-slot .slot-empty span{font-size:1.4rem}
+.photo-slot .slot-empty p{font-size:.68rem;color:var(–hint);font-weight:500;text-align:center;line-height:1.3}
+.photo-slot .slot-del{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.6);border:none;border-radius:50%;width:22px;height:22px;color:#fff;font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
+.photo-slot .slot-del:hover{background:var(–danger)}
+
+/* BARCODE IMAGE SECTION */
+.bc-section{margin-bottom:16px}
+.bc-section label{display:block;font-size:.72rem;font-weight:600;color:var(–text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px}
+.bc-upload{border:1.5px dashed var(–border-strong);border-radius:var(–rs);padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;position:relative;transition:border-color .15s,background .15s;background:var(–surface2)}
+.bc-upload:hover{border-color:var(–accent);background:var(–accent-l)}
+.bc-upload input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.bc-upload .bc-icon{font-size:1.8rem;flex-shrink:0}
+.bc-upload p{font-size:.78rem;color:var(–text2);line-height:1.4}
+.bc-upload p strong{display:block;color:var(–text);font-size:.82rem;margin-bottom:2px}
+.bc-preview{display:flex;align-items:center;gap:10px;padding:10px;background:var(–surface2);border:1.5px solid var(–border);border-radius:var(–rs)}
+.bc-preview img{height:48px;object-fit:contain;background:#fff;padding:4px;border-radius:4px;border:1px solid var(–border)}
+.bc-preview span{flex:1;font-size:.78rem;color:var(–text2)}
+.bc-preview button{background:none;border:none;cursor:pointer;color:var(–hint);font-size:.9rem;padding:4px;border-radius:4px;transition:all .12s}
+.bc-preview button:hover{background:var(–danger-l);color:var(–danger)}
+
+/* IMAGE LIGHTBOX */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center;cursor:pointer}
+.lightbox.open{display:flex}
+.lightbox img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:var(–r);box-shadow:var(–sh3)}
+
+/* SCAN MODAL */
+.scan-tabs{display:flex;border:1.5px solid var(–border);border-radius:var(–rs);overflow:hidden;margin-bottom:16px}
+.stab{flex:1;padding:10px;text-align:center;font-size:.8rem;font-weight:600;cursor:pointer;background:var(–surface2);color:var(–text2);border:none;font-family:‘DM Sans’,sans-serif;transition:all .15s;border-right:1px solid var(–border)}
+.stab:last-child{border-right:none}
+.stab.active{background:var(–accent);color:#fff}
+.stab:hover:not(.active){background:var(–border)}
+.camera-wrap{position:relative;background:#000;border-radius:var(–r);overflow:hidden;margin-bottom:10px}
+#cvp{width:100%;display:block;max-height:240px;object-fit:cover}
+.sol{position:absolute;left:10%;right:10%;top:50%;height:2px;background:var(–accent);box-shadow:0 0 8px rgba(46,125,50,.8);animation:sl 2s ease-in-out infinite}
+@keyframes sl{0%,100%{top:30%}50%{top:70%}}
+.cph{background:var(–surface2);border:2px dashed var(–border-strong);border-radius:var(–r);padding:36px 20px;text-align:center;margin-bottom:10px}
+.cph .cphi{font-size:2.2rem;margin-bottom:8px}
+.cph p{font-size:.8rem;color:var(–text2);line-height:1.6}
+#cstatus{font-size:.75rem;color:var(–text2);text-align:center;margin-bottom:10px;min-height:18px}
+#cstatus.sc{color:var(–accent);font-weight:600}
+#cstatus.er{color:var(–danger)}
+.scan-area{background:var(–surface2);border:2px dashed var(–border-strong);border-radius:var(–r);padding:24px 20px;text-align:center;margin-bottom:12px}
+.scan-icon{font-size:2rem;margin-bottom:8px}
+.scan-area p{font-size:.8rem;color:var(–text2);margin-bottom:14px;line-height:1.6}
+.scan-input{width:100%;background:var(–surface);border:2px solid var(–accent);border-radius:var(–rs);color:var(–text);padding:11px 14px;font-size:1rem;font-family:monospace;text-align:center;outline:none;letter-spacing:4px;font-weight:600;box-shadow:0 0 0 4px rgba(46,125,50,.08)}
+.sresult{margin-top:10px;padding:9px 13px;border-radius:var(–rs);font-size:.82rem;font-weight:500;display:none}
+.sresult.found{background:var(–accent-l);color:var(–accent);display:block}
+.sresult.notfound{background:var(–warn-l);color:var(–warn);display:block}
+
+/* CATS */
+.cat-list{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.cat-item{display:flex;align-items:center;gap:8px;background:var(–surface2);border:1px solid var(–border);border-radius:var(–rs);padding:9px 11px}
+.cat-item span{flex:1;font-size:.88rem}
+.cat-item button{background:none;border:none;color:var(–hint);cursor:pointer;font-size:.85rem;padding:2px 6px;border-radius:4px;transition:all .12s}
+.cat-item button:hover{background:var(–danger-l);color:var(–danger)}
+.car{display:flex;gap:8px}
+.car input{flex:1;background:var(–surface);border:1.5px solid var(–border);border-radius:var(–rs);color:var(–text);padding:9px 11px;font-family:‘DM Sans’,sans-serif;font-size:.9rem;outline:none;transition:border-color .15s}
+.car input:focus{border-color:var(–accent);box-shadow:0 0 0 3px rgba(46,125,50,.1)}
+
+/* TOAST */
+.toast{position:fixed;bottom:26px;right:26px;padding:12px 18px;border-radius:var(–r);font-size:.83rem;font-weight:600;box-shadow:var(–sh3);z-index:999;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(–accent);color:#fff}
+.toast.error{background:var(–danger);color:#fff}
+.toast.warning{background:var(–warn);color:#fff}
+
+@media(max-width:600px){.hstats{display:none}.fr2{grid-template-columns:1fr}.photo-slots{grid-template-columns:1fr}}
+</style>
+
+</head>
+<body>
+
+<header>
+  <div class="hi">
+    <div class="logo">Weed<em>place</em><sub>Glass</sub></div>
+    <div class="hstats">
+      <div class="hs"><div class="hs-v" id="ss">0</div><div class="hs-l">SKUs</div></div>
+      <div class="hs"><div class="hs-v" id="su">0</div><div class="hs-l">Units</div></div>
+      <div class="hs"><div class="hs-v w" id="sl">0</div><div class="hs-l">Low Stock</div></div>
+      <div class="hs"><div class="hs-v" id="sv">$0</div><div class="hs-l">Retail Value</div></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <div class="sw"><span class="si">🔍</span><input class="sinput" id="searchInput" placeholder="Search items, SKUs, categories…" oninput="renderGrid()"></div>
+    <button class="btn bp" onclick="openAdd()">+ Add Item</button>
+    <button class="btn bs" onclick="openScan()">📷 Scan</button>
+    <button class="btn bs" onclick="exportCSV()">↓ CSV</button>
+  </div>
+  <div class="fr" id="filterRow"></div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<!-- ADD/EDIT MODAL -->
+
+<div class="overlay" id="addOverlay">
+  <div class="modal">
+    <div class="mh"><h2 id="mTitle">Add New Item</h2><button class="mc" onclick="closeModal('addOverlay')">✕</button></div>
+    <div class="mb">
+
+```
+  <!-- PRODUCT PHOTOS -->
+  <div class="photo-section">
+    <label>Product Photos (up to 4)</label>
+    <div class="photo-slots" id="photoSlots"></div>
+  </div>
+
+  <!-- BARCODE IMAGE -->
+  <div class="bc-section">
+    <label>Barcode Image</label>
+    <div id="bcArea"></div>
+  </div>
+
+  <div class="fld"><label>Item Name *</label><input id="f-name" type="text" placeholder="e.g. 14mm Quartz Banger"></div>
+  <div class="fr2">
+    <div class="fld"><label>Category *</label><select id="f-type"></select></div>
+    <div class="fld"><label>Brand / Maker</label><input id="f-brand" type="text" placeholder="e.g. Grav, Local"></div>
+  </div>
+  <div class="fr2">
+    <div class="fld"><label>Retail Price ($) *</label><input id="f-price" type="number" placeholder="0.00" min="0" step="0.01"></div>
+    <div class="fld"><label>Your Cost ($)</label><input id="f-cost" type="number" placeholder="0.00" min="0" step="0.01"></div>
+  </div>
+  <div class="fr2">
+    <div class="fld"><label>Quantity *</label><input id="f-qty" type="number" placeholder="0" min="0"></div>
+    <div class="fld"><label>Low Stock Alert At</label><input id="f-low" type="number" placeholder="2" min="0"><div class="fhint">Warn when qty hits this</div></div>
+  </div>
+  <div class="fr2">
+    <div class="fld"><label>Size</label><input id="f-size" type="text" placeholder='e.g. 14mm, 10"'></div>
+    <div class="fld"><label>Color / Style</label><input id="f-color" type="text" placeholder="Clear, Heady…"></div>
+  </div>
+  <div class="fld"><label>Barcode / SKU (text)</label><input id="f-sku" type="text" placeholder="Scan or enter manually"></div>
+  <div class="fld"><label>Notes</label><textarea id="f-notes" placeholder="Joint size, material, anything useful…"></textarea></div>
+</div>
+<div class="mf">
+  <button class="btn bg" onclick="closeModal('addOverlay')">Cancel</button>
+  <button class="btn bp" onclick="saveItem()">Save Item</button>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- SCAN MODAL -->
+
+<div class="overlay" id="scanOverlay">
+  <div class="modal" style="max-width:460px">
+    <div class="mh"><h2>Scan Barcode</h2><button class="mc" onclick="closeScan()">✕</button></div>
+    <div class="mb">
+      <div class="scan-tabs">
+        <button class="stab active" id="t-cam" onclick="switchScanTab('camera')">📷 Camera</button>
+        <button class="stab" id="t-usb" onclick="switchScanTab('usb')">🔌 USB / Bluetooth</button>
+      </div>
+      <div id="p-camera">
+        <div id="cph" class="cph"><div class="cphi">📷</div><p>Tap Start Camera — hold barcode steady in frame.</p></div>
+        <div id="c-live" style="display:none"><div class="camera-wrap"><video id="cvp" autoplay playsinline muted></video><div class="sol"></div></div></div>
+        <div id="cstatus"></div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button class="btn bp" id="btn-start" onclick="startCamera()">▶ Start Camera</button>
+          <button class="btn bs" id="btn-stop" style="display:none" onclick="stopCamera()">■ Stop</button>
+        </div>
+      </div>
+      <div id="p-usb" style="display:none">
+        <div class="scan-area"><div class="scan-icon">🔌</div><p>Click the field and scan with your USB/Bluetooth scanner.</p><input class="scan-input" id="scanInput" placeholder="Ready…" oninput="handleUSB(this.value)" autocomplete="off"></div>
+      </div>
+      <div class="sresult" id="sresult"></div>
+    </div>
+    <div class="mf">
+      <button class="btn bg" onclick="closeScan()">Cancel</button>
+      <button class="btn bp" onclick="processScan()">Look Up / Add New</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORIES MODAL -->
+
+<div class="overlay" id="catOverlay">
+  <div class="modal" style="max-width:400px">
+    <div class="mh"><h2>Edit Categories</h2><button class="mc" onclick="closeModal('catOverlay')">✕</button></div>
+    <div class="mb">
+      <p style="font-size:.8rem;color:var(--text2);margin-bottom:14px">Add or remove categories. Changes apply immediately.</p>
+      <div class="cat-list" id="catList"></div>
+      <div class="car">
+        <input id="nci" type="text" placeholder="New category…" onkeydown="if(event.key==='Enter')addCat()">
+        <button class="btn bp" onclick="addCat()">+ Add</button>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn bg" onclick="closeModal('catOverlay')">Cancel</button>
+      <button class="btn bp" onclick="saveCats()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lbImg" src="" alt="">
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_CATS = ['Bongs','Rigs','Nails','Bowls','Inserts','Caps','Tools','Electric Devices'];
+let categories = JSON.parse(localStorage.getItem('wp_cats')||'null') || DEFAULT_CATS;
+let tempCats = [];
+let inventory = JSON.parse(localStorage.getItem('wp_glass_v4')||'null') || [
+  {id:uid(),name:'14" Beaker Bong',type:'Bongs',brand:'Grav',price:189.99,cost:85,qty:3,lowAt:2,size:'14"',color:'Clear',sku:'8472910283',notes:'Ice catcher, 14mm joint',photos:[],barcodeImg:''},
+  {id:uid(),name:'Quartz Banger 14mm',type:'Nails',brand:'Local',price:34.99,cost:12,qty:1,lowAt:3,size:'14mm',color:'Clear',sku:'7361829047',notes:'90° angle',photos:[],barcodeImg:''},
+  {id:uid(),name:'E-Nail Kit',type:'Electric Devices',brand:'Pulsar',price:149.99,cost:68,qty:0,lowAt:1,size:'—',color:'Black',sku:'9182736450',notes:'Includes coil + controller',photos:[],barcodeImg:''},
+];
+
+let editIdx = null, filterType = 'all';
+let cameraStream = null, scannedCode = '';
+let currentScanTab = 'camera';
+// temp photo state for form
+let formPhotos = []; // array of up to 4 base64 strings or ''
+let formBarcodeImg = '';
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function save(){localStorage.setItem('wp_glass_v4',JSON.stringify(inventory))}
+function saveCatsLS(){localStorage.setItem('wp_cats',JSON.stringify(categories))}
+
+// ── FILTER ROW ──
+function buildFilterRow(){
+  const r=document.getElementById('filterRow');
+  r.innerHTML=`<button class="tab ${filterType==='all'?'active':''}" onclick="setFilter('all',this)">All</button>`
+    +categories.map(c=>`<button class="tab ${filterType===c?'active':''}" onclick="setFilter('${c.replace(/'/g,"\\'")}',this)">${c}</button>`).join('')
+    +`<button class="tab wt ${filterType==='low'?'active':''}" onclick="setFilter('low',this)">⚠ Low Stock</button>`
+    +`<button class="tab mt" onclick="openCatModal()">✎ Categories</button>`;
+}
+function setFilter(t,el){filterType=t;buildFilterRow();renderGrid()}
+
+// ── GRID ──
+function renderGrid(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const f=inventory.filter(item=>{
+    const m=!q||[item.name,item.sku||'',item.type,item.brand||'',item.color||''].join(' ').toLowerCase().includes(q);
+    const ft=filterType==='all'?true:filterType==='low'?item.qty<=(item.lowAt??2):item.type===filterType;
+    return m&&ft;
+  });
+  const grid=document.getElementById('grid');
+  if(!f.length){grid.innerHTML=`<div class="empty"><div class="ei">🫧</div><h3>Nothing here yet</h3><p>Add your first item to get started.</p></div>`;updateStats();return}
+  grid.innerHTML=f.map((item,fi)=>{
+    const idx=inventory.indexOf(item);
+    const isOut=item.qty===0,isLow=!isOut&&item.qty<=(item.lowAt??2);
+    const bc2=isOut?'bout':isLow?'blow':'bin';
+    const bt=isOut?'Out of Stock':isLow?'Low Stock':'In Stock';
+    const sub=[item.brand,item.color,item.size].filter(Boolean).join(' · ');
+    const margin=item.cost>0?Math.round(((item.price-item.cost)/item.price)*100):null;
+    const thumb=item.photos&&item.photos[0];
+    const photoHTML=thumb
+      ?`<div class="card-photo-wrap"><img class="card-photo" src="${thumb}" alt="${item.name}" onclick="openLightbox('${thumb}')"><div class="photo-overlay" onclick="openLightbox('${thumb}')"><span>View Photo</span></div></div>`
+      :`<div class="no-photo" onclick="openEdit(${idx})"><span>📷</span><p>Add Photo</p></div>`;
+    return `<div class="card" style="animation-delay:${fi*.04}s">
+      ${photoHTML}
+      <div class="card-body">
+        <div class="card-header2"><span class="card-type">${item.type}</span><span class="sbadge ${bc2}">${bt}</span></div>
+        <div class="card-name">${item.name}</div>
+        ${sub?`<div class="card-sub">${sub}</div>`:''}
+        ${item.sku?`<div class="card-sku">SKU: ${item.sku}</div>`:''}
+        <div class="div"></div>
+        <div class="cmeta">
+          <div class="mi"><label>Price</label><span class="pv">$${parseFloat(item.price).toFixed(2)}</span></div>
+          <div class="mi"><label>In Stock</label><span>${item.qty} units</span></div>
+          ${item.cost>0?`<div class="mi"><label>Cost</label><span>$${parseFloat(item.cost).toFixed(2)}</span></div>`:''}
+          ${margin!==null?`<div class="mi"><label>Margin</label><span>${margin}%</span></div>`:''}
+        </div>
+        <div class="cactions">
+          <div class="qc">
+            <button class="qb" onclick="adj(${idx},-1)">−</button>
+            <span class="qv">${item.qty}</span>
+            <button class="qb" onclick="adj(${idx},1)">+</button>
+          </div>
+          <button class="btn bg" onclick="openEdit(${idx})">Edit</button>
+          <button class="btn bdg" onclick="del(${idx})" title="Delete">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  updateStats();
+}
+
+function updateStats(){
+  document.getElementById('ss').textContent=inventory.length;
+  document.getElementById('su').textContent=inventory.reduce((a,i)=>a+i.qty,0);
+  document.getElementById('sl').textContent=inventory.filter(i=>i.qty<=(i.lowAt??2)).length;
+  const v=inventory.reduce((a,i)=>a+(i.price*i.qty),0);
+  document.getElementById('sv').textContent='$'+v.toLocaleString('en-US',{maximumFractionDigits:0});
+}
+
+// ── QTY ──
+function adj(idx,d){
+  inventory[idx].qty=Math.max(0,inventory[idx].qty+d);
+  save();renderGrid();
+  const item=inventory[idx];
+  if(item.qty===0)showToast(`Out of stock: ${item.name}`,'warning');
+  else if(item.qty<=(item.lowAt??2))showToast(`Low stock: ${item.name}`,'warning');
+}
+function del(idx){
+  if(!confirm(`Delete "${inventory[idx].name}"?`))return;
+  inventory.splice(idx,1);save();renderGrid();showToast('Item deleted');
+}
+
+// ── PHOTO FORM HELPERS ──
+function buildPhotoSlots(){
+  const wrap=document.getElementById('photoSlots');
+  wrap.innerHTML='';
+  for(let i=0;i<4;i++){
+    const slot=document.createElement('div');
+    slot.className='photo-slot';
+    slot.dataset.idx=i;
+    if(formPhotos[i]){
+      slot.innerHTML=`<img class="slot-preview" src="${formPhotos[i]}" alt="Photo ${i+1}">
+        <button class="slot-del" onclick="removePhoto(${i},event)" title="Remove">✕</button>`;
+    } else {
+      slot.innerHTML=`<div class="slot-empty"><span>📷</span><p>${i===0?'Main Photo':'Add Photo'}</p></div>
+        <input type="file" accept="image/*" onchange="handlePhotoUpload(${i},this)">`;
+    }
+    wrap.appendChild(slot);
+  }
+}
+
+function handlePhotoUpload(slotIdx, input){
+  const file=input.files[0];
+  if(!file)return;
+  if(file.size>5*1024*1024){showToast('Image too large (max 5MB)','error');return}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    formPhotos[slotIdx]=e.target.result;
+    buildPhotoSlots();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto(slotIdx,e){
+  e.stopPropagation();
+  formPhotos[slotIdx]='';
+  buildPhotoSlots();
+}
+
+function buildBarcodeArea(){
+  const wrap=document.getElementById('bcArea');
+  if(formBarcodeImg){
+    wrap.innerHTML=`<div class="bc-preview">
+      <img src="${formBarcodeImg}" alt="Barcode">
+      <span>Barcode image attached</span>
+      <button onclick="removeBarcodeImg()" title="Remove">✕</button>
+    </div>`;
+  } else {
+    wrap.innerHTML=`<div class="bc-upload">
+      <div class="bc-icon">▦</div>
+      <p><strong>Upload barcode image</strong>Scan a barcode sticker or label photo from your camera roll</p>
+      <input type="file" accept="image/*" onchange="handleBarcodeUpload(this)">
+    </div>`;
+  }
+}
+
+function handleBarcodeUpload(input){
+  const file=input.files[0];
+  if(!file)return;
+  if(file.size>3*1024*1024){showToast('Image too large (max 3MB)','error');return}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    formBarcodeImg=e.target.result;
+    buildBarcodeArea();
+    // Try to auto-read the barcode from the uploaded image
+    tryDecodeBarcode(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeBarcodeImg(){
+  formBarcodeImg='';
+  buildBarcodeArea();
+}
+
+function tryDecodeBarcode(dataUrl){
+  // Use QuaggaJS static decode to try reading the barcode from the image
+  Quagga.decodeSingle({
+    decoder:{readers:['code_128_reader','ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_39_reader']},
+    locate:true,
+    src:dataUrl
+  }, result=>{
+    if(result&&result.codeResult&&result.codeResult.code){
+      const code=result.codeResult.code;
+      document.getElementById('f-sku').value=code;
+      showToast(`Barcode read: ${code}`,'success');
+    }
+  });
+}
+
+// ── ADD / EDIT ──
+function populateSelect(sel){
+  const el=document.getElementById('f-type');
+  el.innerHTML=categories.map(c=>`<option${c===sel?' selected':''}>${c}</option>`).join('');
+}
+
+function openAdd(){
+  editIdx=null;
+  clearForm();
+  formPhotos=['','','',''];
+  formBarcodeImg='';
+  document.getElementById('mTitle').textContent='Add New Item';
+  populateSelect(categories[0]);
+  buildPhotoSlots();
+  buildBarcodeArea();
+  openModal('addOverlay');
+}
+
+function openEdit(idx){
+  editIdx=idx;
+  const i=inventory[idx];
+  document.getElementById('mTitle').textContent='Edit Item';
+  document.getElementById('f-name').value=i.name;
+  populateSelect(i.type);
+  document.getElementById('f-brand').value=i.brand||'';
+  document.getElementById('f-price').value=i.price;
+  document.getElementById('f-cost').value=i.cost||'';
+  document.getElementById('f-qty').value=i.qty;
+  document.getElementById('f-low').value=i.lowAt??2;
+  document.getElementById('f-size').value=i.size||'';
+  document.getElementById('f-color').value=i.color||'';
+  document.getElementById('f-sku').value=i.sku||'';
+  document.getElementById('f-notes').value=i.notes||'';
+  // load photos
+  formPhotos=i.photos?[...i.photos]:['','','',''];
+  while(formPhotos.length<4)formPhotos.push('');
+  formBarcodeImg=i.barcodeImg||'';
+  buildPhotoSlots();
+  buildBarcodeArea();
+  openModal('addOverlay');
+}
+
+function clearForm(){
+  ['f-name','f-brand','f-price','f-cost','f-size','f-color','f-sku','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-qty').value='0';
+  document.getElementById('f-low').value='2';
+}
+
+function saveItem(){
+  const name=document.getElementById('f-name').value.trim();
+  const price=parseFloat(document.getElementById('f-price').value);
+  if(!name){showToast('Item name is required','error');return}
+  if(isNaN(price)||price<0){showToast('Valid price is required','error');return}
+  const item={
+    id:editIdx!==null?inventory[editIdx].id:uid(),
+    name,price,
+    type:document.getElementById('f-type').value,
+    brand:document.getElementById('f-brand').value.trim(),
+    cost:parseFloat(document.getElementById('f-cost').value)||0,
+    qty:parseInt(document.getElementById('f-qty').value)||0,
+    lowAt:parseInt(document.getElementById('f-low').value)||2,
+    size:document.getElementById('f-size').value.trim(),
+    color:document.getElementById('f-color').value.trim(),
+    sku:document.getElementById('f-sku').value.trim(),
+    notes:document.getElementById('f-notes').value.trim(),
+    photos:formPhotos.filter(Boolean),
+    barcodeImg:formBarcodeImg,
+  };
+  if(editIdx!==null){inventory[editIdx]=item;showToast('Item updated ✓','success')}
+  else{inventory.unshift(item);showToast('Item added ✓','success')}
+  save();closeModal('addOverlay');renderGrid();
+}
+
+// ── LIGHTBOX ──
+function openLightbox(src){
+  document.getElementById('lbImg').src=src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open')}
+
+// ── SCAN ──
+function openScan(){
+  scannedCode='';
+  document.getElementById('sresult').className='sresult';
+  document.getElementById('sresult').textContent='';
+  document.getElementById('scanInput').value='';
+  openModal('scanOverlay');
+}
+function closeScan(){stopCamera();closeModal('scanOverlay')}
+function switchScanTab(t){
+  currentScanTab=t;
+  document.getElementById('t-cam').classList.toggle('active',t==='camera');
+  document.getElementById('t-usb').classList.toggle('active',t==='usb');
+  document.getElementById('p-camera').style.display=t==='camera'?'':'none';
+  document.getElementById('p-usb').style.display=t==='usb'?'':'none';
+  if(t==='usb'){stopCamera();setTimeout(()=>document.getElementById('scanInput').focus(),100)}
+}
+function startCamera(){
+  const st=document.getElementById('cstatus');
+  st.textContent='Requesting camera access…';st.className='sc';
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    .then(stream=>{
+      cameraStream=stream;
+      const v=document.getElementById('cvp');v.srcObject=stream;
+      document.getElementById('cph').style.display='none';
+      document.getElementById('c-live').style.display='';
+      document.getElementById('btn-start').style.display='none';
+      document.getElementById('btn-stop').style.display='';
+      st.textContent='🟢 Scanning — hold barcode steady in frame';st.className='sc';
+      Quagga.init({
+        inputStream:{name:'Live',type:'LiveStream',target:document.getElementById('c-live'),constraints:{facingMode:'environment'}},
+        decoder:{readers:['code_128_reader','ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_39_reader']},
+        locate:true
+      },err=>{
+        if(err){st.textContent='📷 Camera active — use Look Up after scanning';st.className='';return}
+        Quagga.start();
+        Quagga.onDetected(r=>{
+          const code=r.codeResult.code;
+          if(code){scannedCode=code;st.textContent=`✓ Detected: ${code}`;st.className='';Quagga.stop();lookupCode(code)}
+        });
+      });
+    })
+    .catch(()=>{
+      st.textContent='⚠ Camera access denied. Use USB/Bluetooth instead.';st.className='er';
+    });
+}
+function stopCamera(){
+  if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null}
+  try{Quagga.stop()}catch(e){}
+  document.getElementById('cph').style.display='';
+  document.getElementById('c-live').style.display='none';
+  document.getElementById('btn-start').style.display='';
+  document.getElementById('btn-stop').style.display='none';
+  document.getElementById('cstatus').textContent='';
+  document.getElementById('cstatus').className='';
+}
+let usbT;
+function handleUSB(v){clearTimeout(usbT);if(v.length>=6)usbT=setTimeout(()=>{scannedCode=v;processScan()},280)}
+function processScan(){
+  const code=scannedCode||document.getElementById('scanInput').value.trim();
+  if(!code)return;lookupCode(code);
+}
+function lookupCode(code){
+  scannedCode=code;
+  const found=inventory.find(i=>i.sku===code);
+  const el=document.getElementById('sresult');
+  if(found){
+    el.className='sresult found';
+    el.textContent=`✓ Found: ${found.name} — ${found.qty} in stock`;
+    setTimeout(()=>{closeScan();openEdit(inventory.indexOf(found))},900);
+  } else {
+    el.className='sresult notfound';
+    el.textContent=`No match for "${code}" — click "Add New" to create it`;
+  }
+}
+
+// ── CATEGORIES ──
+function openCatModal(){
+  tempCats=[...categories];
+  renderCatList();
+  openModal('catOverlay');
+}
+function renderCatList(){
+  document.getElementById('catList').innerHTML=tempCats.map((c,i)=>
+    `<div class="cat-item"><span>🏷 ${c}</span><button onclick="removeTempCat(${i})">✕</button></div>`
+  ).join('');
+}
+function removeTempCat(i){tempCats.splice(i,1);renderCatList()}
+function addCat(){
+  const v=document.getElementById('nci').value.trim();
+  if(!v)return;
+  if(tempCats.includes(v)){showToast('Already exists','error');return}
+  tempCats.push(v);document.getElementById('nci').value='';renderCatList();
+}
+function saveCats(){
+  if(!tempCats.length){showToast('Need at least one category','error');return}
+  categories=[...tempCats];saveCatsLS();
+  closeModal('catOverlay');buildFilterRow();renderGrid();
+  showToast('Categories saved ✓','success');
+}
+
+// ── EXPORT ──
+function exportCSV(){
+  const h=['Name','Category','Brand','Price','Cost','Qty','Low Alert','Size','Color','SKU','Notes','Has Photo','Has Barcode Image'];
+  const rows=inventory.map(i=>[i.name,i.type,i.brand,i.price,i.cost,i.qty,i.lowAt,i.size,i.color,i.sku,i.notes,
+    i.photos&&i.photos.length>0?'Yes':'No',i.barcodeImg?'Yes':'No'].map(v=>`"${String(v??'').replace(/"/g,'""')}"`));
+  const csv=[h.join(','),...rows.map(r=>r.join(','))].join('\n');
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:`weedplace-glass-${new Date().toISOString().slice(0,10)}.csv`});
+  a.click();showToast('CSV exported ✓','success');
+}
+
+// ── UTILS ──
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.overlay').forEach(el=>
+  el.addEventListener('click',e=>{if(e.target===el){if(el.id==='scanOverlay')closeScan();else el.classList.remove('open')}})
+);
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className=`toast show ${type}`;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',3000);
+}
+
+// ── INIT ──
+buildFilterRow();renderGrid();
+</script>
+
+</body>
+</html>
