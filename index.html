@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weedplace — Glass Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<style>
+:root {
+--bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;
+--border:#e2e0d8;--border-strong:#c8c5b8;
+--text:#1a1916;--text2:#6b6860;--hint:#a09e97;
+--accent:#2e7d32;--accent-l:#e8f5e9;--accent-h:#1b5e20;
+--danger:#c0392b;--danger-l:#fdf0ef;
+--warn:#d4880a;--warn-l:#fdf6e3;
+--sh1:0 1px 3px rgba(0,0,0,.07);--sh2:0 4px 12px rgba(0,0,0,.09);--sh3:0 12px 32px rgba(0,0,0,.11);
+--r:10px;--rs:6px;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh;margin:0}
+
+/* minimal layout (full styling from your code) */
+header{background:var(--surface);border-bottom:1px solid var(--border)}
+.hi{max-width:1200px;margin:0 auto;padding:16px;display:flex;align-items:center;gap:24px}
+.logo{font-family:'Playfair Display',serif;font-size:1.3rem}
+.logo em{font-style:normal;color:var(--accent)}
+main{max-width:1200px;margin:0 auto;padding:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px}
+.btn{padding:8px 12px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+
+<header>
+<div class="hi">
+<div class="logo">Weed<em>place</em> Glass</div>
+</div>
+</header>
+
+<main>
+<button class="btn" onclick="addItem()">Add Item</button>
+<div class="grid" id="grid"></div>
+</main>
+
+<script>
+let inventory = JSON.parse(localStorage.getItem('wp_inventory')||'[]');
+
+function save(){
+localStorage.setItem('wp_inventory',JSON.stringify(inventory));
+render();
+}
+
+function addItem(){
+let name=prompt("Item name");
+if(!name)return;
+let price=parseFloat(prompt("Price","0"));
+let qty=parseInt(prompt("Quantity","0"));
+inventory.unshift({name,price,qty});
+save();
+}
+
+function render(){
+let g=document.getElementById("grid");
+if(!inventory.length){
+g.innerHTML="<p>No inventory yet.</p>";
+return;
+}
+g.innerHTML=inventory.map(i=>`
+<div class="card">
+<strong>${i.name}</strong><br>
+Price: $${i.price}<br>
+Qty: ${i.qty}
+</div>
+`).join("");
+}
+
+render();
+</script>
+
+</body>
+</html>
